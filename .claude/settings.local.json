@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(iwr get.maestro.mobile.dev -useb | iex)",
+      "PowerShell(iwr -Uri \"https://get.maestro.mobile.dev\" -UseBasicParsing | iex)",
+      "PowerShell([Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $response = Invoke-WebRequest -Uri \"https://get.maestro.mobile.dev\" -MaximumRedirection 10 -UseBasicParsing; Invoke-Expression $response.Content)",
+      "PowerShell(curl.exe -L \"https://get.maestro.mobile.dev\" -o \"$env:TEMP\\\\install-maestro.sh\" 2>&1; Get-Content \"$env:TEMP\\\\install-maestro.sh\" | Select-Object -First 5)",
+      "PowerShell(eas --version 2>&1)",
+      "Bash(git add *)"
+    ],
+    "additionalDirectories": [
+      "e:\\My projects\\UriScan_AI"
+    ]
+  }
+}

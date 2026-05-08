@@ -1,53 +1,66 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+import { Platform, type ViewStyle } from 'react-native';
+import { Colors } from './colors';
 
-import { Platform } from 'react-native';
+export { Colors };
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  base: 16,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
+  xxxl: 48,
+} as const;
 
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
-};
+export const Radii = {
+  sm: 6,
+  md: 10,
+  base: 14,
+  lg: 18,
+  xl: 24,
+  pill: 999,
+} as const;
+
+export const Typography = {
+  display: { fontSize: 36, fontWeight: '800' as const, letterSpacing: -0.5 },
+  h1: { fontSize: 28, fontWeight: '700' as const, letterSpacing: -0.3 },
+  h2: { fontSize: 22, fontWeight: '700' as const },
+  h3: { fontSize: 18, fontWeight: '600' as const },
+  body: { fontSize: 15, fontWeight: '400' as const },
+  bodyBold: { fontSize: 15, fontWeight: '600' as const },
+  caption: { fontSize: 13, fontWeight: '400' as const },
+  micro: { fontSize: 11, fontWeight: '500' as const, letterSpacing: 0.4 },
+} as const;
+
+export const Shadows = {
+  card: Platform.select<ViewStyle>({
+    android: { elevation: 2 },
+    default: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+    },
+  }) as ViewStyle,
+  raised: Platform.select<ViewStyle>({
+    android: { elevation: 6 },
+    default: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+    },
+  }) as ViewStyle,
+} as const;
 
 export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
+  ios: { sans: 'system-ui', rounded: 'ui-rounded', mono: 'ui-monospace' },
+  default: { sans: 'normal', rounded: 'normal', mono: 'monospace' },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    rounded: "'SF Pro Rounded', system-ui, sans-serif",
+    mono: "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
-});
+}) as { sans: string; rounded: string; mono: string };
