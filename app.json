@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "UriScan_AI",
+    "name": "UriScan AI",
     "slug": "UriScan_AI",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.moiz_ratlam77.UriScan_AI",
+      "package": "com.uriscanai.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
@@ -38,15 +38,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "backgroundColor": "#0B1220"
+            "backgroundColor": "#1E3A8A"
           }
         }
       ],
-      "expo-sqlite",
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/notification-icon.png",
           "color": "#2563EB",
           "defaultChannel": "hydration-reminders"
         }
@@ -63,15 +62,14 @@
           "photosPermission": "Allow UriScan AI to access your photos for future hydration scan features."
         }
       ],
-      "expo-iap",
-      "@react-native-google-signin/google-signin"
+            "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
     "extra": {
-      "bypassIap": true,
+      "bypassIap": false,
       "router": {},
       "eas": {
         "projectId": "652c085e-32eb-446f-914e-6d860b59b3e4"

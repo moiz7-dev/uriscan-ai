@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <path d="M 512 212 C 512 212 302 458 302 598 A 210 210 0 1 0 722 598 C 722 458 512 212 512 212 Z"
-        fill="#000000"/>
+  <!--
+    Single white shape on transparent. Android tints it per theme.
+    Uses evenodd: outer droplet path + inner scan-slot cutout, so the
+    AI/scan hint survives tinting (gradients/glows would not).
+  -->
+  <path fill="#FFFFFF" fill-rule="evenodd"
+        d="M 512 212 C 512 212 302 458 302 598 A 210 210 0 1 0 722 598 C 722 458 512 212 512 212 Z
+           M 340 552 H 684 V 580 H 340 Z"/>
 </svg>

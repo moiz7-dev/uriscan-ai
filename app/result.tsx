@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radii, Shadows, Spacing, Typography } from '@/constants/theme';
 import { COLOR_SWATCHES, getLevelColor } from '@/constants/hydrationData';
@@ -16,13 +16,21 @@ import type { HydrationColor } from '@/types';
 
 const VALID_COLORS: HydrationColor[] = [
   'clear',
+  'pale-yellow',
   'light-yellow',
+  'straw',
   'yellow',
   'dark-yellow',
+  'honey',
   'amber',
   'orange',
+  'orange-red',
   'brown',
+  'dark-brown',
   'red',
+  'pink',
+  'cloudy',
+  'green',
 ];
 
 function isValidColor(value: string): value is HydrationColor {
@@ -76,7 +84,7 @@ function Result() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <Animated.View
-        entering={SlideInDown.springify().damping(16)}
+        entering={FadeIn.duration(200)}
         style={styles.container}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -114,27 +122,25 @@ function Result() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <View style={styles.actions}>
-            <Pressable
-              onPress={scanAgain}
-              style={styles.ghostButton}
-              accessibilityRole="button"
-              accessibilityLabel="Scan again"
-            >
-              <Text style={styles.ghostText}>Scan Again</Text>
-            </Pressable>
-            <Pressable
-              onPress={openReport}
-              style={styles.primaryButton}
-              accessibilityRole="button"
-              accessibilityLabel={isPro ? 'View detailed report' : 'View paywall to unlock report'}
-            >
-              <Ionicons name={isPro ? 'document-text' : 'lock-open'} size={18} color="#fff" />
-              <Text style={styles.primaryText}>
-                {isPro ? 'View Detailed Report' : 'Unlock Detailed Report'}
-              </Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={openReport}
+            style={styles.primaryButton}
+            accessibilityRole="button"
+            accessibilityLabel={isPro ? 'View detailed report' : 'Unlock detailed report'}
+          >
+            <Ionicons name={isPro ? 'document-text-outline' : 'lock-open-outline'} size={20} color="#fff" />
+            <Text style={styles.primaryText}>
+              {isPro ? 'View Detailed Report' : 'Unlock Detailed Report'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={scanAgain}
+            style={styles.ghostButton}
+            accessibilityRole="button"
+            accessibilityLabel="Scan again"
+          >
+            <Text style={styles.ghostText}>Scan Again</Text>
+          </Pressable>
           <DisclaimerBanner variant="inline" />
         </View>
       </Animated.View>
@@ -199,36 +205,31 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   footer: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.card,
     gap: Spacing.sm,
   },
-  actions: { flexDirection: 'row', gap: Spacing.md },
-  ghostButton: {
-    flex: 1,
-    paddingVertical: Spacing.base,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    minHeight: 52,
-  },
-  ghostText: { ...Typography.bodyBold, color: Colors.text },
   primaryButton: {
-    flex: 1.4,
-    paddingVertical: Spacing.base,
-    borderRadius: Radii.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    minHeight: 52,
-    flexDirection: 'row',
     gap: Spacing.sm,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.base + 2,
+    borderRadius: Radii.pill,
+    minHeight: 56,
     ...Shadows.raised,
   },
-  primaryText: { ...Typography.bodyBold, color: '#fff' },
+  primaryText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.1 },
+  ghostButton: {
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  ghostText: { ...Typography.bodyBold, color: Colors.textMuted },
 });

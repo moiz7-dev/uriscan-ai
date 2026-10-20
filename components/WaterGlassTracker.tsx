@@ -1,16 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Colors, Radii, Spacing, Typography } from '@/constants/theme';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   glasses: boolean[];
@@ -49,25 +39,9 @@ function GlassIcon({ filled }: { filled: boolean }) {
 }
 
 function Glass({ filled, onPress, index }: GlassProps) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  function handlePress() {
-    cancelAnimation(scale);
-    scale.value = 1;
-    scale.value = withSequence(
-      withTiming(1.16, { duration: 90, easing: Easing.out(Easing.quad) }),
-      withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) }),
-    );
-    onPress();
-  }
-
   return (
-    <AnimatedPressable
-      onPress={handlePress}
+    <Pressable
+      onPress={onPress}
       hitSlop={6}
       accessibilityRole="button"
       accessibilityLabel={
@@ -76,11 +50,11 @@ function Glass({ filled, onPress, index }: GlassProps) {
           : `Glass ${index + 1} empty, tap to fill up to ${index + 1}`
       }
       accessibilityState={{ selected: filled }}
-      style={[styles.glass, animatedStyle]}
+      style={styles.glass}
     >
       <GlassIcon filled={filled} />
       <Text style={[styles.label, filled && styles.labelFilled]}>250 ml</Text>
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 
@@ -98,17 +72,14 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: Spacing.md,
+    gap: Spacing.sm,
+    justifyContent: 'center',
   },
   glass: {
-    width: '23%',
-    minHeight: 80,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    borderRadius: Radii.md,
-    gap: Spacing.xs,
+    gap: 4,
+    borderRadius: Radii.sm,
+    padding: Spacing.xs,
   },
   label: {
     ...Typography.micro,
@@ -116,6 +87,6 @@ const styles = StyleSheet.create({
   },
   labelFilled: {
     color: Colors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

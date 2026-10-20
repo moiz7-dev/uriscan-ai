@@ -1,12 +1,20 @@
 export type HydrationColor =
   | 'clear'
+  | 'pale-yellow'
   | 'light-yellow'
+  | 'straw'
   | 'yellow'
   | 'dark-yellow'
+  | 'honey'
   | 'amber'
   | 'orange'
+  | 'orange-red'
   | 'brown'
-  | 'red';
+  | 'dark-brown'
+  | 'red'
+  | 'pink'
+  | 'cloudy'
+  | 'green';
 
 export type HydrationLevel =
   | 'overhydrated'
@@ -27,10 +35,11 @@ export interface HydrationResult {
   colorHex: string;
   shouldSeeDoctor: boolean;
   actionSteps: string[];
+  causes: string[];
 }
 
 export interface Scan {
-  id: number;
+  id: string;
   reportId: string;
   color: HydrationColor;
   level: HydrationLevel;
@@ -116,7 +125,7 @@ export interface SparkPoint {
 
 export interface DetailedReportData {
   reportId: string;
-  scanId: number;
+  scanId: string;
   generatedAt: string;
   color: HydrationColor;
   colorHex: string;
@@ -131,6 +140,7 @@ export interface DetailedReportData {
   waterAdvice: string;
   shouldSeeDoctor: boolean;
   actionSteps: string[];
+  causes: string[];
   sevenDayAverage: number;
   sevenDayPattern: string;
   spark: SparkPoint[];

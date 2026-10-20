@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,10 +6,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ColorPicker } from '@/components/ColorPicker';
@@ -64,16 +62,6 @@ function Home() {
   );
 
   const pulse = useSharedValue(1);
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.04, { duration: 900 }),
-        withTiming(1, { duration: 900 }),
-      ),
-      -1,
-      true,
-    );
-  }, [pulse]);
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
   }));
@@ -111,10 +99,16 @@ function Home() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
           <Text style={styles.brand}>UriScan AI</Text>
           <Text style={styles.greeting}>{greeting()} 💧</Text>
-        </View>
+          <Text style={styles.tagline}>AI-powered wellness · Not a diagnostic tool</Text>
+        </LinearGradient>
 
         <View style={styles.scoreCard}>
           <HydrationMeter score={todayScore} color={meterColor} />
@@ -232,9 +226,16 @@ function Home() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxxl },
-  header: { gap: Spacing.xs },
-  brand: { ...Typography.h1, color: Colors.text },
-  greeting: { ...Typography.body, color: Colors.textMuted },
+  hero: {
+    gap: Spacing.xs,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radii.xl,
+    ...Shadows.raised,
+  },
+  brand: { ...Typography.h1, color: '#fff' },
+  greeting: { ...Typography.body, color: 'rgba(255,255,255,0.85)' },
+  tagline: { ...Typography.micro, color: 'rgba(255,255,255,0.55)', marginTop: 4 },
 
   scoreCard: {
     alignItems: 'center',

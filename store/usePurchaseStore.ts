@@ -7,6 +7,7 @@ import {
   isInBypassMode,
   purchase as runPurchase,
   restorePurchases as runRestore,
+  syncEntitlement,
 } from '@/lib/iap/purchaseService';
 import type { Entitlement, PurchaseResult, RestoreResult } from '@/types';
 
@@ -48,10 +49,40 @@ export const usePurchaseStore = create<PurchaseStore>((set, get) => ({
 
   loadEntitlement: async () => {
     try {
+      // In bypass/dev mode skip RevenueCat and trust Supabase directly
+      if (get().bypassMode) {
+        const e = await getEntitlement();
+        set({ entitlement: e, isPro: e.isPro });
+        return;
+      }
+
+      // RevenueCat is the server-side source of truth for subscription status
+      const { isPro: rcIsPro } = await syncEntitlement();
       const e = await getEntitlement();
-      set({ entitlement: e, isPro: e.isPro });
-    } catch (e) {
-      console.warn('loadEntitlement failed', e);
+
+      // Reconcile: if RC and Supabase disagree, bring Supabase in line
+      if (rcIsPro !== e.isPro) {
+        const updated = await setEntitlement({
+          isPro: rcIsPro,
+          store: rcIsPro ? (e.store ?? 'play_store') : null,
+          sku: rcIsPro ? e.sku : null,
+          txnRef: rcIsPro ? e.txnRef : null,
+          purchaseToken: rcIsPro ? e.purchaseToken : null,
+          purchasedAt: rcIsPro ? (e.purchasedAt ?? new Date().toISOString()) : null,
+        });
+        set({ entitlement: updated, isPro: rcIsPro });
+      } else {
+        set({ entitlement: e, isPro: e.isPro });
+      }
+    } catch (err) {
+      console.warn('loadEntitlement failed', err);
+      // Fallback: read from Supabase if RevenueCat is unreachable
+      try {
+        const e = await getEntitlement();
+        set({ entitlement: e, isPro: e.isPro });
+      } catch {
+        // Leave state as is
+      }
     }
   },
 

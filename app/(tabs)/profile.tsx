@@ -194,8 +194,10 @@ function Profile() {
           </View>
           {disclaimerOpen && (
             <Text style={styles.disclaimerBody}>
-              UriScan AI provides general wellness insights only. It is not a
-              medical device, does not diagnose or treat any condition, and
+              UriScan AI is a wellness app that uses AI to generate hydration
+              reports based on urine color. It is not an official diagnostic
+              tool, not a medical device, and does not diagnose or treat any
+              condition. Reports are for general wellness awareness only and
               should not replace advice from a qualified healthcare professional.
               If you notice red, brown, or persistently dark urine, please
               consult a doctor.

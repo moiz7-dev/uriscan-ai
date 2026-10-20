@@ -23,6 +23,7 @@ const tasks = [
   ['android-background.svg',  'android-icon-background.png',    1024],
   ['android-monochrome.svg',  'android-icon-monochrome.png',    1024],
   ['splash-icon.svg',         'splash-icon.png',                1024],
+  ['notification-icon.svg',   'notification-icon.png',          96],
   ['icon.svg',                'favicon.png',                    48],
 ];
 

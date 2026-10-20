@@ -43,3 +43,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# secrets / local-only
+credentials.json
+credentials/
+tmp/

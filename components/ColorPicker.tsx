@@ -1,15 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLOR_SWATCHES, type ColorSwatch } from '@/constants/hydrationData';
 import { Colors, Radii, Shadows, Spacing, Typography } from '@/constants/theme';
 import type { HydrationColor } from '@/types';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   selected: HydrationColor | null;
@@ -22,20 +14,19 @@ interface SwatchProps {
   onPress: () => void;
 }
 
+const COLUMNS = 4;
+const GAP = Spacing.sm; // 8px between items
+// Subtract outer padding (scroll + card, both sides) then divide into 4 equal columns.
+// Spacing.lg * 4 = 20 * 4 = 80px total horizontal padding in the typical container.
+const ITEM_WIDTH = Math.floor(
+  (Dimensions.get('window').width - Spacing.lg * 4 - (COLUMNS - 1) * GAP) / COLUMNS,
+);
+const SWATCH_SIZE = Math.floor(ITEM_WIDTH * 0.8);
+
 function Swatch({ swatch, isSelected, onPress }: SwatchProps) {
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    scale.value = withSpring(isSelected ? 1.1 : 1, { damping: 10, stiffness: 180 });
-  }, [isSelected, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
     <View style={styles.swatchWrap}>
-      <AnimatedPressable
+      <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`Select ${swatch.label}`}
@@ -44,12 +35,11 @@ function Swatch({ swatch, isSelected, onPress }: SwatchProps) {
           styles.swatch,
           { backgroundColor: swatch.hex },
           isSelected && styles.swatchSelected,
-          animatedStyle,
         ]}
       />
       <Text
         style={[styles.label, isSelected && styles.labelSelected]}
-        numberOfLines={1}
+        numberOfLines={2}
       >
         {swatch.label}
       </Text>
@@ -72,36 +62,37 @@ export function ColorPicker({ selected, onSelect }: Props) {
   );
 }
 
-const SWATCH_SIZE = 72;
-
 const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: Spacing.lg,
+    justifyContent: 'center',
+    gap: GAP,
+    rowGap: Spacing.base,
   },
   swatchWrap: {
-    width: '23%',
+    width: ITEM_WIDTH,
     alignItems: 'center',
+    gap: Spacing.sm,
   },
   swatch: {
     width: SWATCH_SIZE,
     height: SWATCH_SIZE,
     borderRadius: Radii.base,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 3,
+    borderColor: 'transparent',
     ...Shadows.card,
   },
   swatchSelected: {
-    borderWidth: 3,
     borderColor: Colors.primary,
   },
   label: {
     ...Typography.caption,
     color: Colors.textMuted,
-    marginTop: Spacing.sm,
     textAlign: 'center',
+    lineHeight: 15,
+    minHeight: 30,
+    fontSize: 11,
   },
   labelSelected: {
     color: Colors.primary,

@@ -14,7 +14,7 @@ export function DisclaimerBanner({ style, variant = 'subtle' }: Props) {
       style={[styles.container, variant === 'inline' && styles.inline, style]}
     >
       <Text style={styles.text}>
-        For wellness insights only. Not a medical diagnostic tool.
+        UriScan AI uses AI to generate wellness reports. It is not an official diagnostic tool and does not replace medical advice.
       </Text>
     </View>
   );

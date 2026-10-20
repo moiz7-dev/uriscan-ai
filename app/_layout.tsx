@@ -7,7 +7,6 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { initDatabase } from '@/lib/database';
 import { useHydrationStore } from '@/store/useHydrationStore';
 import { useTrackerStore } from '@/store/useTrackerStore';
 import { usePurchaseStore } from '@/store/usePurchaseStore';
@@ -52,39 +51,24 @@ export default function RootLayout() {
   const hydrateFromStorage = useTrackerStore((s) => s.hydrateFromStorage);
   const loadEntitlement = usePurchaseStore((s) => s.loadEntitlement);
   const hydrateProductInfo = usePurchaseStore((s) => s.hydrateProductInfo);
-  const restore = usePurchaseStore((s) => s.restore);
   const initializeAuth = useAuthStore((s) => s.initialize);
   const authLoaded = useAuthStore((s) => s.loaded);
+  const session = useAuthStore((s) => s.session);
 
+  // One-time init: auth session + local settings + RevenueCat pricing
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await Promise.all([initDatabase(), initializeAuth()]);
-        if (cancelled) return;
-        await Promise.all([
-          loadTodayData(),
-          hydrateFromStorage(),
-          loadEntitlement(),
-        ]);
-        if (cancelled) return;
-        hydrateProductInfo().catch(() => {});
-        restore().catch(() => {});
-      } catch (e) {
-        console.warn('Initialization failed', e);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    loadTodayData,
-    hydrateFromStorage,
-    loadEntitlement,
-    hydrateProductInfo,
-    restore,
-    initializeAuth,
-  ]);
+    initializeAuth().catch(() => {});
+    hydrateFromStorage().catch(() => {});
+    hydrateProductInfo().catch(() => {});
+  }, [initializeAuth, hydrateFromStorage, hydrateProductInfo]);
+
+  // Whenever a session becomes available (sign-in or app launch with existing session)
+  // reload all user-specific cloud data so reinstalls restore correctly.
+  useEffect(() => {
+    if (!session) return;
+    loadTodayData().catch(() => {});
+    loadEntitlement().catch(() => {});
+  }, [session, loadTodayData, loadEntitlement]);
 
   useAuthGate();
 

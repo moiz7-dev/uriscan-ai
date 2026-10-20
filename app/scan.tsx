@@ -66,7 +66,7 @@ function Scan() {
     setCapturing(true);
     try {
       const taken = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
+        quality: 0.9,
         skipProcessing: false,
       });
       if (taken?.uri) {
@@ -86,7 +86,7 @@ function Scan() {
   async function pickFromGallery() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      quality: 0.7,
+      quality: 0.9,
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
@@ -298,42 +298,92 @@ function Scan() {
           )}
 
           {!analyzing && analysis && (
-            <View style={styles.analysisRow}>
-              <View
-                style={[
-                  styles.detectedSwatch,
-                  { backgroundColor: analysis.hex },
-                ]}
-              />
-              <View style={styles.analysisInfo}>
-                <Text style={styles.analysisLabel}>
-                  Detected: {analysis.swatch.label}
-                </Text>
-                <View style={styles.confidenceRow}>
-                  <View
-                    style={[
-                      styles.confidenceDot,
-                      { backgroundColor: confidenceColor(analysis.confidence) },
-                    ]}
-                  />
-                  <Text style={styles.confidenceText}>
-                    {confidenceLabel(analysis.confidence)} confidence
+            <View style={styles.analysisResult}>
+              {/* Detected sample swatch */}
+              <View style={styles.analysisRow}>
+                <View
+                  style={[
+                    styles.detectedSwatch,
+                    { backgroundColor: analysis.hex },
+                  ]}
+                />
+                <View style={styles.analysisInfo}>
+                  <Text style={styles.analysisLabel}>
+                    Best match: {analysis.swatch.label}
                   </Text>
+                  <View style={styles.confidenceRow}>
+                    <View
+                      style={[
+                        styles.confidenceDot,
+                        { backgroundColor: confidenceColor(analysis.confidence) },
+                      ]}
+                    />
+                    <Text style={styles.confidenceText}>
+                      {confidenceLabel(analysis.confidence)} confidence
+                    </Text>
+                  </View>
+                  {analysis.confidence !== 'high' && (
+                    <Text style={styles.confidenceHint}>
+                      Lighting may shift results — confirm below.
+                    </Text>
+                  )}
                 </View>
-                {analysis.confidence !== 'high' && (
-                  <Text style={styles.confidenceHint}>
-                    Lighting may have shifted the result. Confirm or change below.
-                  </Text>
-                )}
               </View>
+
+              {/* Top-3 quick-pick strip */}
+              {analysis.candidates.length > 1 && (
+                <View style={styles.candidatesWrap}>
+                  <Text style={styles.candidatesLabel}>Top matches — tap to select:</Text>
+                  <View style={styles.candidatesRow}>
+                    {analysis.candidates.map((c, i) => {
+                      const isActive = selected === c.swatch.id;
+                      return (
+                        <Pressable
+                          key={c.swatch.id}
+                          onPress={() => setSelected(c.swatch.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Select ${c.swatch.label}`}
+                          accessibilityState={{ selected: isActive }}
+                          style={[
+                            styles.candidateItem,
+                            isActive && styles.candidateItemActive,
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.candidateSwatch,
+                              { backgroundColor: c.swatch.hex },
+                              isActive && styles.candidateSwatchActive,
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.candidateName,
+                              isActive && styles.candidateNameActive,
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {c.swatch.label}
+                          </Text>
+                          {i === 0 && (
+                            <View style={styles.bestBadge}>
+                              <Text style={styles.bestBadgeText}>#1</Text>
+                            </View>
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
             </View>
           )}
         </View>
 
         <View style={styles.helperCard}>
-          <Text style={styles.helperTitle}>Confirm the match</Text>
+          <Text style={styles.helperTitle}>Not quite right?</Text>
           <Text style={styles.helperSub}>
-            Tap a swatch to override the auto-detection.
+            Pick the closest color from the full grid below.
           </Text>
           <View style={styles.helperSpacer} />
           <ColorPicker selected={selected} onSelect={setSelected} />
@@ -568,6 +618,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.card,
   },
+  analysisResult: { gap: Spacing.base },
   analysisRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.base },
   detectedSwatch: {
     width: 56,
@@ -594,6 +645,75 @@ const styles = StyleSheet.create({
   },
   errorTitle: { ...Typography.bodyBold, color: Colors.danger },
   errorText: { ...Typography.caption, color: Colors.textMuted, marginTop: 4 },
+
+  candidatesWrap: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    paddingTop: Spacing.base,
+    gap: Spacing.sm,
+  },
+  candidatesLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '600',
+  },
+  candidatesRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  candidateItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: 4,
+    borderRadius: Radii.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    backgroundColor: Colors.background,
+    position: 'relative',
+  },
+  candidateItemActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '10',
+  },
+  candidateSwatch: {
+    width: 44,
+    height: 44,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  candidateSwatchActive: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+  },
+  candidateName: {
+    ...Typography.micro,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 14,
+    minHeight: 28,
+  },
+  candidateNameActive: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  bestBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  bestBadgeText: {
+    ...Typography.micro,
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 9,
+  },
 
   helperCard: {
     backgroundColor: Colors.card,

@@ -17,7 +17,7 @@ interface HydrationStore {
   stats: HydrationStats;
   isLoading: boolean;
   loadTodayData: () => Promise<void>;
-  addScan: (result: HydrationResult) => Promise<{ scanId: number; reportId: string }>;
+  addScan: (result: HydrationResult) => Promise<{ scanId: string; reportId: string }>;
 }
 
 const emptyStats: HydrationStats = { totalScans: 0, averageScore: 0, bestDay: null };

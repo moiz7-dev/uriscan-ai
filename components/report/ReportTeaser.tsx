@@ -21,17 +21,21 @@ export function ReportTeaser() {
         ))}
       </View>
 
-      <BlurView intensity={28} tint="light" style={StyleSheet.absoluteFill} />
+      {/* Blur + fade layered together over the preview rows */}
+      <BlurView intensity={22} tint="light" style={styles.blurOverlay} />
 
       <LinearGradient
-        colors={['rgba(248,250,252,0.0)', 'rgba(248,250,252,0.85)']}
+        colors={['rgba(248,250,252,0.0)', 'rgba(248,250,252,0.92)']}
         style={styles.fade}
         pointerEvents="none"
       />
 
-      <View style={styles.lockBadge} pointerEvents="none">
-        <Ionicons name="lock-closed" size={14} color={Colors.primary} />
-        <Text style={styles.lockText}>Tap below to unlock</Text>
+      {/* Lock badge — centered at the bottom of the fade zone */}
+      <View style={styles.lockBadgeWrap} pointerEvents="none">
+        <View style={styles.lockBadge}>
+          <Ionicons name="lock-closed" size={14} color={Colors.primaryDark} />
+          <Text style={styles.lockText}>Tap below to unlock</Text>
+        </View>
       </View>
     </View>
   );
@@ -45,60 +49,92 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     ...Shadows.card,
   },
+
   previewCard: {
-    padding: Spacing.lg,
-    gap: Spacing.md,
+    padding: Spacing.xl,
+    paddingBottom: Spacing.xl + Spacing.lg, // extra bottom room for lock badge
+    gap: Spacing.base,
   },
+
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
   rowFirst: { borderTopWidth: 0, paddingTop: 0 },
+
   dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: Colors.primary,
-    marginTop: 6,
+    marginTop: 7,
+    flexShrink: 0,
   },
-  rowText: { flex: 1, gap: 6 },
-  rowTitle: { ...Typography.bodyBold, color: Colors.text },
+
+  rowText: { flex: 1, gap: 7 },
+
+  rowTitle: {
+    ...Typography.bodyBold,
+    color: Colors.text,
+    lineHeight: 22,
+  },
+
   rowLine1: {
     height: 8,
-    width: '92%',
+    width: '88%',
     borderRadius: 4,
     backgroundColor: Colors.border,
   },
   rowLine2: {
     height: 8,
-    width: '64%',
+    width: '60%',
     borderRadius: 4,
     backgroundColor: Colors.border,
   },
+
+  /* Blur starts at ~40% from top so the first 2-3 rows read clearly */
+  blurOverlay: {
+    position: 'absolute',
+    top: '40%',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
   fade: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 120,
+    height: 140,
+  },
+
+  lockBadgeWrap: {
+    position: 'absolute',
+    bottom: Spacing.xl,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   lockBadge: {
-    position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.card,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    backgroundColor: Colors.accentCyanLight,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.base,
     borderRadius: Radii.pill,
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
+    borderWidth: 1.5,
+    borderColor: Colors.accentCyan,
   },
-  lockText: { ...Typography.micro, color: Colors.primary, fontWeight: '700' },
+  lockText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+    letterSpacing: 0.2,
+  },
 });
