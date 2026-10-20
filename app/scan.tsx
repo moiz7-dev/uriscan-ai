@@ -17,7 +17,12 @@ import { ColorPicker } from '@/components/ColorPicker';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 import { Colors, Radii, Shadows, Spacing, Typography } from '@/constants/theme';
-import { analyzePhotoColor, type AnalyzedColor } from '@/lib/colorAnalysis';
+import {
+  analyzePhotoColor,
+  coverMap,
+  type AnalyzedColor,
+  type SampleRegion,
+} from '@/lib/colorAnalysis';
 import { analyzeHydration } from '@/lib/hydrationEngine';
 import { useHydrationStore } from '@/store/useHydrationStore';
 import type { HydrationColor } from '@/types';
@@ -44,9 +49,41 @@ export default function ScanScreen() {
   );
 }
 
+// Sampled square side as a fraction of the reticle diameter (the inscribed
+// square is ~0.71; 0.6 keeps clear of the ring edge).
+const RETICLE_SAMPLE_FRACTION = 0.6;
+
+// Position/size of the review-screen circle so it outlines the region that
+// was actually sampled (photo is shown "cover" inside the box).
+function sampleReticleStyle(
+  box: { w: number; h: number },
+  photo: { width: number; height: number },
+  region: SampleRegion | null,
+) {
+  const { scale, offX, offY } = coverMap(box.w, box.h, photo.width, photo.height);
+  const shorter = Math.min(photo.width, photo.height);
+  const side = region?.side ?? 0.45;
+  const d = Math.max(side * shorter * scale, 24);
+  const cx = (region?.cx ?? 0.5) * photo.width * scale + offX;
+  const cy = (region?.cy ?? 0.5) * photo.height * scale + offY;
+  return {
+    left: cx - d / 2,
+    top: cy - d / 2,
+    width: d,
+    height: d,
+    borderRadius: d / 2,
+    marginLeft: 0,
+    marginTop: 0,
+  };
+}
+
 function Scan() {
   const router = useRouter();
   const cameraRef = useRef<CameraView | null>(null);
+  const cameraBoxRef = useRef<View | null>(null);
+  const reticleRef = useRef<View | null>(null);
+  const [region, setRegion] = useState<SampleRegion | null>(null);
+  const [photoBox, setPhotoBox] = useState<{ w: number; h: number } | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [selected, setSelected] = useState<HydrationColor | null>(null);
@@ -61,6 +98,34 @@ function Scan() {
     router.back();
   }
 
+  // Where the on-screen reticle sits on the captured photo. The preview is
+  // drawn "cover" (cropped to fill), so map screen coords through that crop.
+  function measureWindow(v: View | null) {
+    return new Promise<{ x: number; y: number; w: number; h: number } | null>((resolve) => {
+      if (!v) return resolve(null);
+      v.measureInWindow((x, y, w, h) => resolve({ x, y, w, h }));
+    });
+  }
+
+  async function reticleRegion(imgW: number, imgH: number): Promise<SampleRegion | null> {
+    if (!imgW || !imgH) return null;
+    const [box, ret] = await Promise.all([
+      measureWindow(cameraBoxRef.current),
+      measureWindow(reticleRef.current),
+    ]);
+    if (!box || !ret || !box.w || !box.h) return null;
+    const { scale, offX, offY } = coverMap(box.w, box.h, imgW, imgH);
+    const cx = (ret.x - box.x + ret.w / 2 - offX) / scale;
+    const cy = (ret.y - box.y + ret.h / 2 - offY) / scale;
+    const side = (ret.w * RETICLE_SAMPLE_FRACTION) / scale;
+    const shorter = Math.min(imgW, imgH);
+    return {
+      cx: Math.min(Math.max(cx / imgW, 0), 1),
+      cy: Math.min(Math.max(cy / imgH, 0), 1),
+      side: Math.min(side / shorter, 1),
+    };
+  }
+
   async function capture() {
     if (!cameraRef.current || capturing) return;
     setCapturing(true);
@@ -70,6 +135,7 @@ function Scan() {
         skipProcessing: false,
       });
       if (taken?.uri) {
+        setRegion(await reticleRegion(taken.width ?? 0, taken.height ?? 0));
         setPhoto({
           uri: taken.uri,
           width: taken.width ?? 0,
@@ -90,6 +156,7 @@ function Scan() {
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
+      setRegion(null);
       setPhoto({
         uri: asset.uri,
         width: asset.width ?? 0,
@@ -100,6 +167,7 @@ function Scan() {
 
   function retake() {
     setPhoto(null);
+    setRegion(null);
     setSelected(null);
     setAnalysis(null);
     setAnalysisError(null);
@@ -128,7 +196,12 @@ function Scan() {
     setAnalysisError(null);
     (async () => {
       try {
-        const result = await analyzePhotoColor(photo.uri, photo.width, photo.height);
+        const result = await analyzePhotoColor(
+          photo.uri,
+          photo.width,
+          photo.height,
+          region,
+        );
         if (cancelled) return;
         setAnalysis(result);
         setSelected(result.swatch.id);
@@ -145,7 +218,7 @@ function Scan() {
     return () => {
       cancelled = true;
     };
-  }, [photo]);
+  }, [photo, region]);
 
   if (!permission) {
     return <View style={styles.fill} />;
@@ -190,41 +263,46 @@ function Scan() {
 
   if (!photo) {
     return (
-      <View style={styles.fill}>
+      <View style={styles.fill} ref={cameraBoxRef} collapsable={false}>
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
           facing="back"
         />
+        <View style={styles.reticleWrap} pointerEvents="none">
+          <View style={styles.reticle} ref={reticleRef} collapsable={false}>
+            <View style={styles.crossH} />
+            <View style={styles.crossV} />
+          </View>
+          <Text style={styles.reticleHint}>
+            Center your sample in the circle
+          </Text>
+        </View>
         <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-          <View style={styles.cameraTopBar}>
-            <Pressable
-              onPress={close}
-              style={styles.iconButton}
-              accessibilityRole="button"
-              accessibilityLabel="Close camera"
-            >
-              <Ionicons name="close" size={28} color="#fff" />
-            </Pressable>
-            <Text style={styles.cameraTitle}>Camera Scan</Text>
-            <View style={styles.iconButton} />
-          </View>
+          <View>
+            <View style={styles.cameraTopBar}>
+              <Pressable
+                onPress={close}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close camera"
+              >
+                <Ionicons name="close" size={28} color="#fff" />
+              </Pressable>
+              <Text style={styles.cameraTitle}>Camera Scan</Text>
+              <View style={styles.iconButton} />
+            </View>
 
-          <View style={styles.reticleWrap} pointerEvents="none">
-            <View style={styles.reticle} />
-            <Text style={styles.reticleHint}>
-              Center your sample in the circle
-            </Text>
-          </View>
+            <View style={styles.tipsCard}>
+              <Text style={styles.tipsTitle}>For best results</Text>
+              {SCAN_TIPS.map((tip, i) => (
+                <View key={i} style={styles.tipRow}>
+                  <View style={styles.tipBullet} />
+                  <Text style={styles.tipText}>{tip}</Text>
+                </View>
+              ))}
+            </View>
 
-          <View style={styles.tipsCard}>
-            <Text style={styles.tipsTitle}>For best results</Text>
-            {SCAN_TIPS.map((tip, i) => (
-              <View key={i} style={styles.tipRow}>
-                <View style={styles.tipBullet} />
-                <Text style={styles.tipText}>{tip}</Text>
-              </View>
-            ))}
           </View>
 
           <View style={styles.cameraBottomBar}>
@@ -269,8 +347,25 @@ function Scan() {
         </View>
 
         <View style={styles.photoCard}>
-          <Image source={{ uri: photo.uri }} style={styles.photo} resizeMode="cover" />
-          <View style={styles.photoReticle} pointerEvents="none" />
+          <Image
+            source={{ uri: photo.uri }}
+            style={styles.photo}
+            resizeMode="cover"
+            onLayout={(e) =>
+              setPhotoBox({
+                w: e.nativeEvent.layout.width,
+                h: e.nativeEvent.layout.height,
+              })
+            }
+          />
+          {photoBox && photo.width > 0 && photo.height > 0 ? (
+            <View
+              style={[styles.photoReticle, sampleReticleStyle(photoBox, photo, region)]}
+              pointerEvents="none"
+            >
+              <View style={styles.centerDot} />
+            </View>
+          ) : null}
           <Pressable
             onPress={retake}
             style={styles.retakePill}
@@ -483,10 +578,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Absolutely centered in the camera view so the reticle sits at the true
+  // middle of the preview; the hint hangs below without shifting the circle.
   reticleWrap: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.lg,
   },
   reticle: {
     width: 220,
@@ -497,7 +594,45 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     opacity: 0.85,
   },
+  crossH: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 18,
+    height: 2,
+    marginLeft: -9,
+    marginTop: -1,
+    borderRadius: 1,
+    backgroundColor: '#fff',
+  },
+  crossV: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 2,
+    height: 18,
+    marginLeft: -1,
+    marginTop: -9,
+    borderRadius: 1,
+    backgroundColor: '#fff',
+  },
+  centerDot: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 6,
+    height: 6,
+    marginLeft: -3,
+    marginTop: -3,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.35)',
+  },
   reticleHint: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: 110 + Spacing.lg,
     ...Typography.bodyBold,
     color: '#fff',
     textAlign: 'center',

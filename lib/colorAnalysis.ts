@@ -21,6 +21,31 @@ export interface AnalyzedColor {
   pixelCoverage: number;
 }
 
+/**
+ * Where on the photo to sample, as fractions: `cx`/`cy` are the region center
+ * (0–1 of photo width/height) and `side` is the square side as a fraction of
+ * the photo's shorter dimension. Omit for a centered default crop.
+ */
+export interface SampleRegion {
+  cx: number;
+  cy: number;
+  side: number;
+}
+
+/**
+ * Geometry of an image drawn with resizeMode "cover" inside a box: the image is
+ * scaled uniformly to fill the box and the overflow is cropped equally on both
+ * sides. Used to map between on-screen points and photo pixels.
+ */
+export function coverMap(boxW: number, boxH: number, imgW: number, imgH: number) {
+  const scale = Math.max(boxW / imgW, boxH / imgH);
+  return {
+    scale,
+    offX: (boxW - imgW * scale) / 2,
+    offY: (boxH - imgH * scale) / 2,
+  };
+}
+
 // ─── Tuning constants ────────────────────────────────────────────────────────
 
 /** Sample side length in pixels. 48×48 = 2304 pixels for robust statistics. */
@@ -253,11 +278,17 @@ export async function analyzePhotoColor(
   uri: string,
   width: number,
   height: number,
+  region?: SampleRegion | null,
 ): Promise<AnalyzedColor> {
   const shorter = Math.min(width, height);
-  const cropSize = Math.floor(shorter * CENTER_FRACTION);
-  const originX = Math.floor((width - cropSize) / 2);
-  const originY = Math.floor((height - cropSize) / 2);
+  const cropSize = Math.max(
+    1,
+    Math.min(shorter, Math.floor(shorter * (region?.side ?? CENTER_FRACTION))),
+  );
+  const cx = (region?.cx ?? 0.5) * width;
+  const cy = (region?.cy ?? 0.5) * height;
+  const originX = Math.round(Math.min(Math.max(cx - cropSize / 2, 0), width - cropSize));
+  const originY = Math.round(Math.min(Math.max(cy - cropSize / 2, 0), height - cropSize));
 
   const result = await manipulateAsync(
     uri,

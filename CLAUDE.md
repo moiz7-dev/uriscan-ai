@@ -27,6 +27,14 @@ Expo SDK 54 · React Native 0.81 (new arch, React Compiler) · expo-router 6 (ty
 - `docs/` — `SETUP_AUTH.md`, `PRIVACY_POLICY.md`, `ACCOUNT_DELETION_INSTRUCTIONS.md`, Play Data Safety CSV.
 - `android/` and `ios/` are generated (gitignored); change native config via `app.json` / config plugins.
 
+## Scan reticle → photo mapping
+The scan screen's circle reticle is pinned to the exact center of the camera view (own absolute layer, tips card sits at the top). On capture, `reticleRegion()` in `app/scan.tsx` measures the reticle (`measureInWindow`) and maps it through the preview's "cover" crop (`coverMap` in `lib/colorAnalysis.ts`) to a `SampleRegion`; `analyzePhotoColor(..., region)` samples that spot, and the review screen draws the circle + center dot over the sampled region. Gallery picks have no region (center crop).
+
+## Release (Play Store)
+- Production build: `npm run prod` (EAS, AAB). EAS production env must contain all five `EXPO_PUBLIC_*` vars (Supabase URL/anon key, Google web/android client IDs, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`) — as of 2026-10-20 the RevenueCat key was missing from EAS production env.
+- `google-services.json` is untracked, so EAS cloud builds won't see it unless it is committed or supplied as an EAS file env var.
+- `eas.json` has no `appVersionSource`/`autoIncrement`; local `versionCode` is 3 — confirm the highest code already uploaded to Play before building.
+
 ## Conventions
 - Import via `@/` alias. Match existing style: functional components, `StyleSheet.create`, tokens from `@/constants/theme`.
 - Data access goes through `lib/database.ts`, not ad-hoc `supabase` calls in screens.
