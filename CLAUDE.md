@@ -33,7 +33,8 @@ The scan screen's circle reticle is pinned to the exact center of the camera vie
 ## Release (Play Store)
 - Production build: `npm run prod` (EAS, AAB). EAS production env must contain all five `EXPO_PUBLIC_*` vars (Supabase URL/anon key, Google web/android client IDs, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`) — as of 2026-10-20 the RevenueCat key was missing from EAS production env.
 - `google-services.json` is untracked, so EAS cloud builds won't see it unless it is committed or supplied as an EAS file env var.
-- `eas.json` has no `appVersionSource`/`autoIncrement`; local `versionCode` is 3 — confirm the highest code already uploaded to Play before building.
+- Local release builds: `cd android && gradlew bundleRelease` (upload keystore in android/gradle.properties, .env baked in); bump versionCode in app.json AND android/app/build.gradle; upload AAB manually in Play Console (browser tool caps uploads at 10 MB).
+- `eas.json` has no `appVersionSource`/`autoIncrement`; live Play versionCode is 4 (1.0.1, submitted 2026-10-20) — confirm the highest code already uploaded to Play before building.
 
 ## Conventions
 - Import via `@/` alias. Match existing style: functional components, `StyleSheet.create`, tokens from `@/constants/theme`.
