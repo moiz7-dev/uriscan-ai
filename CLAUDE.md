@@ -15,7 +15,7 @@ Expo SDK 54 · React Native 0.81 (new arch, React Compiler) · expo-router 6 (ty
 - `npm run dev` — `expo run:android` (dev build; Expo Go won't work: native modules)
 - `npm start` — Metro; `npm run lint` — `expo lint`; `npx tsc --noEmit` — typecheck
 - `npm run build:icons` — regenerate PNG icons from `assets/icons-source/*.svg` (sharp)
-- `npm run prod` — EAS production AAB; `npm run build` — local `gradlew bundleRelease`
+- `npm run build` — local `gradlew bundleRelease` (the only release path; **never use EAS**, see Release)
 
 ## Layout
 - `app/` — routes. `(auth)/` sign-in/up, forgot/reset password, auth-callback; `(tabs)/` index (home), tracker, history, profile; `scan.tsx`, `result.tsx`, `report/[reportId].tsx`, `reminders.tsx`, `account-deletion.tsx`.
@@ -30,11 +30,13 @@ Expo SDK 54 · React Native 0.81 (new arch, React Compiler) · expo-router 6 (ty
 ## Scan reticle → photo mapping
 The scan screen's circle reticle is pinned to the exact center of the camera view (own absolute layer, tips card sits at the top). On capture, `reticleRegion()` in `app/scan.tsx` measures the reticle (`measureInWindow`) and maps it through the preview's "cover" crop (`coverMap` in `lib/colorAnalysis.ts`) to a `SampleRegion`; `analyzePhotoColor(..., region)` samples that spot, and the review screen draws the circle + center dot over the sampled region. Gallery picks have no region (center crop).
 
-## Release (Play Store)
-- Production build: `npm run prod` (EAS, AAB). EAS production env must contain all five `EXPO_PUBLIC_*` vars (Supabase URL/anon key, Google web/android client IDs, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`) — as of 2026-10-20 the RevenueCat key was missing from EAS production env.
-- `google-services.json` is untracked, so EAS cloud builds won't see it unless it is committed or supplied as an EAS file env var.
-- Local release builds: `cd android && gradlew bundleRelease` (upload keystore in android/gradle.properties, .env baked in); bump versionCode in app.json AND android/app/build.gradle; upload AAB manually in Play Console (browser tool caps uploads at 10 MB).
-- `eas.json` has no `appVersionSource`/`autoIncrement`; live Play versionCode is 4 (1.0.1, submitted 2026-10-20) — confirm the highest code already uploaded to Play before building.
+## Release (Play Store) — LOCAL BUILDS ONLY, NEVER EAS
+- Do not use EAS (`eas build`, `eas submit`, `npm run prod`, EAS env vars). The user decided on local builds only.
+- Build: `cd android && gradlew bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`. Signed with the upload keystore configured in `android/gradle.properties` (`MYAPP_UPLOAD_*`); `.env` is baked in (incl. `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`). Takes ~25 min on Windows.
+- Before building, bump the version in BOTH `app.json` (`version`, `android.versionCode`) and `android/app/build.gradle` (`versionCode`, `versionName`); the code must exceed what Play already has. Live: versionCode 4 (1.0.1, submitted 2026-10-20).
+- Upload the AAB by hand in Play Console (Production → Create new release); the browser tool caps uploads at 10 MB. The track covers 178 countries; leave that as is unless told otherwise.
+- Keep `bypassIap` false in `app.json` for release.
+- `google-services.json` is untracked (needed locally; copied to `android/app/`).
 
 ## Conventions
 - Import via `@/` alias. Match existing style: functional components, `StyleSheet.create`, tokens from `@/constants/theme`.
